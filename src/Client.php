@@ -58,12 +58,27 @@ class Client
     const MALFORMED_RESPONSE = "Result missing expected data.";
     const DUO_CERTS = __DIR__ . "/ca_certs.pem";
 
+    /**
+     * @var string
+     */
     public $client_id;
+    /**
+     * @var string
+     */
     public $api_host;
+    /**
+     * @var string|null
+     */
     public $http_proxy;
+    /**
+     * @var string
+     */
     public $redirect_url;
+    /**
+     * @var bool
+     */
     public $use_duo_code_attribute;
-    private $client_secret;
+    private string $client_secret;
     private $user_agent_extension;
 
     /**
@@ -77,7 +92,8 @@ class Client
     {
         if (isset($result["message"]) && isset($result["message_detail"])) {
             return $result["message"] . ": " . $result["message_detail"];
-        } elseif (isset($result["error"]) && isset($result["error_description"])) {
+        }
+        if (isset($result["error"]) && isset($result["error_description"])) {
             return $result["error"] . ": " . $result["error_description"];
         }
         return self::MALFORMED_RESPONSE;
@@ -211,8 +227,6 @@ class Client
      * Append custom information to the user agent string.
      *
      * @param string $user_agent_extension Custom user agent information
-     *
-     * @return void
      */
     public function appendToUserAgent(string $user_agent_extension): void
     {
@@ -236,8 +250,6 @@ class Client
 
     /**
      * Generate a random hex string with a length of DEFAULT_STATE_LENGTH.
-     *
-     * @return string
      */
     public function generateState(): string
     {
