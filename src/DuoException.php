@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This contians the DuoException class used by
  * Client
@@ -12,6 +14,7 @@
  * @link     TODO
  * @file
  */
+
 namespace Duo\DuoUniversal;
 
 /**

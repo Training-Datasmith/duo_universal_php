@@ -1,43 +1,46 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 namespace Duo\Tests;
 
-use \Firebase\JWT\JWT;
-use \Firebase\JWT\Key;
 use Duo\DuoUniversal\Client;
 use Duo\DuoUniversal\DuoException;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use PHPUnit\Framework\TestCase;
 
 final class ClientTest extends TestCase
 {
-    public $username = "user";
-    public $bad_username = "baduser";
-    public $code = "abcdefghijkl";
+    public $username = 'user';
+    public $bad_username = 'baduser';
+    public $code = 'abcdefghijkl';
     public $bad_expiration = 1234567;
-    public $nonce = "deadbeefdeadbeefdeadbeef";
-    public $bad_nonce = "beefdeadbeefdeadbeef";
-    public $client_id = "12345678901234567890";
-    public $client_secret = "1234567890123456789012345678901234567890";
-    public $api_host = "api-123456.duo.com";
-    public $redirect_url = "https://redirect_example.com";
-    public $url_enc_redirect_url = "https%3A%2F%2Fredirect_example.com";
-    public $bad_client_id = "1234567890123456789";
-    public $long_client_secret = "1234567890123456789012345678901234567890000";
-    public $bad_client_secret = "1111111111111111111111111111111111111111";
+    public $nonce = 'deadbeefdeadbeefdeadbeef';
+    public $bad_nonce = 'beefdeadbeefdeadbeef';
+    public $client_id = '12345678901234567890';
+    public $client_secret = '1234567890123456789012345678901234567890';
+    public $api_host = 'api-123456.duo.com';
+    public $redirect_url = 'https://redirect_example.com';
+    public $url_enc_redirect_url = 'https%3A%2F%2Fredirect_example.com';
+    public $bad_client_id = '1234567890123456789';
+    public $long_client_secret = '1234567890123456789012345678901234567890000';
+    public $bad_client_secret = '1111111111111111111111111111111111111111';
     public $bad_api_host = 123456;
-    public $good_http_request = ["response" => ["timestamp" => 1607009339],
-                                 "stat" => "OK"];
-    public $bad_http_request = ["message" => "invalid_client",
-                                "code" => 40002,
-                                "timestamp" => 1607014550,
-                                "message_detail" => "Failed to verify signature.",
-                                "stat" => "FAIL"];
-    public $missing_stat_health_check = ["response" => ["timestamp" => 1607009339]];
-    public $missing_message_health_check = ["stat" => "Fail"];
-    public $good_state = "deadbeefdeadbeefdeadbeefdeadbeefdead";
-    public $short_state = "deadbeefdeadbeefdeadb";
-    public $bad_http_request_exception = "invalid_client: Failed to verify signature.";
-    public $expected_good_http_request = array("response" => array("timestamp" => 1607009339),
-                                         "stat" => "OK");
+    public $good_http_request = ['response' => ['timestamp' => 1607009339],
+                                 'stat' => 'OK'];
+    public $bad_http_request = ['message' => 'invalid_client',
+                                'code' => 40002,
+                                'timestamp' => 1607014550,
+                                'message_detail' => 'Failed to verify signature.',
+                                'stat' => 'FAIL'];
+    public $missing_stat_health_check = ['response' => ['timestamp' => 1607009339]];
+    public $missing_message_health_check = ['stat' => 'Fail'];
+    public $good_state = 'deadbeefdeadbeefdeadbeefdeadbeefdead';
+    public $short_state = 'deadbeefdeadbeefdeadb';
+    public $bad_http_request_exception = 'invalid_client: Failed to verify signature.';
+    public $expected_good_http_request = ['response' => ['timestamp' => 1607009339],
+                                         'stat' => 'OK'];
 
     /**
      * Pads the client secret to meet minimum key length requirements for HS512.
@@ -100,12 +103,12 @@ final class ClientTest extends TestCase
     {
         $date = new \DateTime();
         $current_date = $date->getTimestamp();
-        $payload = ["exp" => $current_date + Client::JWT_EXPIRATION,
-                "iat" => $current_date,
-                "iss" => "https://" . $this->api_host . Client::TOKEN_ENDPOINT,
-                "aud" => $this->client_id,
-                "preferred_username" => $this->username,
-                "nonce" => $this->nonce
+        $payload = ['exp' => $current_date + Client::JWT_EXPIRATION,
+                'iat' => $current_date,
+                'iss' => 'https://' . $this->api_host . Client::TOKEN_ENDPOINT,
+                'aud' => $this->client_id,
+                'preferred_username' => $this->username,
+                'nonce' => $this->nonce,
         ];
         if ($remove_index) {
             unset($payload[$remove_index]);
@@ -128,10 +131,10 @@ final class ClientTest extends TestCase
         if (!$id_token) {
             $id_token = $this->createIdToken();
         }
-        return ["id_token" => $id_token,
-                "access_token" => "90101112",
-                "expires_in" => "1234567890",
-                "token_type" => "Bearer"];
+        return ['id_token' => $id_token,
+                'access_token' => '90101112',
+                'expires_in' => '1234567890',
+                'token_type' => 'Bearer'];
     }
 
     /**
@@ -148,7 +151,7 @@ final class ClientTest extends TestCase
         // Extract the JWT from the URL
         $query_str = parse_url($auth_url, PHP_URL_QUERY);
         parse_str($query_str, $query_params);
-        $token = $query_params["request"];
+        $token = $query_params['request'];
 
         // Try to decode it using the test's getPaddedSecret()
         // If the signatures don't match, this will throw SignatureInvalidException
@@ -291,10 +294,10 @@ final class ClientTest extends TestCase
     public function providerMissingResponseField(): array
     {
         return [
-            ["token_type"],
-            ["access_token"],
-            ["expires_in"],
-            ["id_token"]
+            ['token_type'],
+            ['access_token'],
+            ['expires_in'],
+            ['id_token'],
         ];
     }
     /**
@@ -315,7 +318,7 @@ final class ClientTest extends TestCase
      */
     public function testTokenExchangeBadNonce(): void
     {
-        $payload = $this->createIdToken("nonce");
+        $payload = $this->createIdToken('nonce');
         $result = $this->createTokenResult($payload);
         $this->expectException(DuoException::class);
         $this->expectExceptionMessage(Client::NONCE_ERROR);
@@ -340,7 +343,7 @@ final class ClientTest extends TestCase
      */
     public function testTokenExchangeExpired(): void
     {
-        $expired = ["exp" => $this->bad_expiration];
+        $expired = ['exp' => $this->bad_expiration];
         $payload = $this->createIdToken(null, $expired);
         $result = $this->createTokenResult($payload);
         $this->expectException(DuoException::class);
@@ -400,12 +403,12 @@ final class ClientTest extends TestCase
     public function providerMissingField(): array
     {
         return [
-            [ "exp", Client::MALFORMED_RESPONSE],
-            [ "iat", Client::MALFORMED_RESPONSE],
-            [ "iss", Client::MALFORMED_RESPONSE],
-            [ "aud", Client::MALFORMED_RESPONSE],
-            [ "nonce", Client::NONCE_ERROR],
-            [ "preferred_username", Client::USERNAME_ERROR ]
+            [ 'exp', Client::MALFORMED_RESPONSE],
+            [ 'iat', Client::MALFORMED_RESPONSE],
+            [ 'iss', Client::MALFORMED_RESPONSE],
+            [ 'aud', Client::MALFORMED_RESPONSE],
+            [ 'nonce', Client::NONCE_ERROR],
+            [ 'preferred_username', Client::USERNAME_ERROR ],
         ];
     }
 
@@ -414,7 +417,7 @@ final class ClientTest extends TestCase
      */
     public function testTokenExchangeBadIss(): void
     {
-        $bad_iss = ["iss" => "https://" . $this->bad_api_host . Client::TOKEN_ENDPOINT];
+        $bad_iss = ['iss' => 'https://' . $this->bad_api_host . Client::TOKEN_ENDPOINT];
         $payload = $this->createIdToken(null, $bad_iss);
         $result = $this->createTokenResult($payload);
         $this->expectException(DuoException::class);
@@ -428,7 +431,7 @@ final class ClientTest extends TestCase
      */
     public function testTokenExchangeBadAud(): void
     {
-        $bad_aud = ["aud" => $this->bad_client_id];
+        $bad_aud = ['aud' => $this->bad_client_id];
         $payload = $this->createIdToken(null, $bad_aud);
         $result = $this->createTokenResult($payload);
         $this->expectException(DuoException::class);
@@ -442,7 +445,7 @@ final class ClientTest extends TestCase
      */
     public function testTokenExchangeBadUsername(): void
     {
-        $bad_aud = ["preferred_username" => $this->bad_username];
+        $bad_aud = ['preferred_username' => $this->bad_username];
         $payload = $this->createIdToken(null, $bad_aud);
         $result = $this->createTokenResult($payload);
         $this->expectException(DuoException::class);
@@ -482,10 +485,10 @@ final class ClientTest extends TestCase
      */
     public function providerState(): array
     {
-        $long_state = str_repeat("a", Client::MAX_STATE_LENGTH + 1);
+        $long_state = str_repeat('a', Client::MAX_STATE_LENGTH + 1);
         return [
             [$this->short_state],
-            [$long_state]
+            [$long_state],
         ];
     }
 
@@ -502,7 +505,7 @@ final class ClientTest extends TestCase
         );
         $auth_url = $client->createAuthUrl($this->username, $this->good_state);
         $jwt = $this->decodeJWTFromURL($auth_url);
-        $this->assertTrue($jwt["use_duo_code_attribute"]);
+        $this->assertTrue($jwt['use_duo_code_attribute']);
     }
 
     /**
@@ -519,7 +522,7 @@ final class ClientTest extends TestCase
         );
         $auth_url = $client->createAuthUrl($this->username, $this->good_state);
         $jwt = $this->decodeJWTFromURL($auth_url);
-        $this->assertFalse($jwt["use_duo_code_attribute"]);
+        $this->assertFalse($jwt['use_duo_code_attribute']);
     }
 
     /**
@@ -529,7 +532,7 @@ final class ClientTest extends TestCase
     {
         $query_str = parse_url($url, PHP_URL_QUERY);
         parse_str($query_str, $query_params);
-        $token = $query_params["request"];
+        $token = $query_params['request'];
         $jwt_key = new Key($this->getPaddedSecret(), Client::SIG_ALGORITHM);
         $result_obj = JWT::decode($token, $jwt_key);
         return json_decode(json_encode($result_obj), true);
@@ -542,12 +545,12 @@ final class ClientTest extends TestCase
     {
         $client = $this->createGoodClient();
         $duo_uri = $client->createAuthUrl($this->username, $this->good_state);
-        $expected_client_id = "client_id=" . $this->client_id;
-        $expected_redir_uri = "redirect_uri=" . $this->url_enc_redirect_url;
+        $expected_client_id = 'client_id=' . $this->client_id;
+        $expected_redir_uri = 'redirect_uri=' . $this->url_enc_redirect_url;
 
         $this->assertStringContainsString($expected_client_id, $duo_uri);
-        $this->assertStringContainsString("response_type=code", $duo_uri);
-        $this->assertStringContainsString("scope=openid", $duo_uri);
+        $this->assertStringContainsString('response_type=code', $duo_uri);
+        $this->assertStringContainsString('scope=openid', $duo_uri);
         $this->assertStringContainsString($expected_redir_uri, $duo_uri);
     }
 
@@ -556,7 +559,7 @@ final class ClientTest extends TestCase
      */
     public function testAppendToUserAgent(): void
     {
-        $custom_extension = "MyApp/1.0.0";
+        $custom_extension = 'MyApp/1.0.0';
         $id_token = $this->createIdToken();
         $result = $this->createTokenResult($id_token);
 
@@ -584,7 +587,7 @@ final class ClientTest extends TestCase
         $this->assertNotNull($captured_user_agent);
         $this->assertStringContainsString($custom_extension, $captured_user_agent);
         $this->assertStringContainsString(Client::USER_AGENT, $captured_user_agent);
-        $this->assertStringContainsString("php/" . phpversion(), $captured_user_agent);
+        $this->assertStringContainsString('php/' . phpversion(), $captured_user_agent);
     }
 
     /**
@@ -615,7 +618,7 @@ final class ClientTest extends TestCase
         // Verify the user agent contains default information but no custom extension
         $this->assertNotNull($captured_user_agent);
         $this->assertStringContainsString(Client::USER_AGENT, $captured_user_agent);
-        $this->assertStringContainsString("php/" . phpversion(), $captured_user_agent);
+        $this->assertStringContainsString('php/' . phpversion(), $captured_user_agent);
         $this->assertStringContainsString(php_uname(), $captured_user_agent);
     }
 
@@ -642,7 +645,7 @@ final class ClientTest extends TestCase
             });
 
         // Append empty user agent extension
-        $client->appendToUserAgent("");
+        $client->appendToUserAgent('');
 
         // Make a call
         $client->exchangeAuthorizationCodeFor2FAResult($this->code, $this->username);
@@ -650,10 +653,10 @@ final class ClientTest extends TestCase
         // Verify the user agent contains default information but no trailing space
         $this->assertNotNull($captured_user_agent);
         $this->assertStringContainsString(Client::USER_AGENT, $captured_user_agent);
-        $this->assertStringContainsString("php/" . phpversion(), $captured_user_agent);
+        $this->assertStringContainsString('php/' . phpversion(), $captured_user_agent);
         $this->assertStringContainsString(php_uname(), $captured_user_agent);
         // Ensure no trailing spaces from empty extension
-        $expected_base = Client::USER_AGENT . " php/" . phpversion() . " " . php_uname();
+        $expected_base = Client::USER_AGENT . ' php/' . phpversion() . ' ' . php_uname();
         $this->assertEquals($expected_base, $captured_user_agent);
     }
 
@@ -680,14 +683,14 @@ final class ClientTest extends TestCase
             });
 
         // Append whitespace-only user agent extension
-        $client->appendToUserAgent("   ");
+        $client->appendToUserAgent('   ');
 
         // Make a call
         $client->exchangeAuthorizationCodeFor2FAResult($this->code, $this->username);
 
         // Verify the user agent contains default information but no extra whitespace
         $this->assertNotNull($captured_user_agent);
-        $expected_base = Client::USER_AGENT . " php/" . phpversion() . " " . php_uname();
+        $expected_base = Client::USER_AGENT . ' php/' . phpversion() . ' ' . php_uname();
         $this->assertEquals($expected_base, $captured_user_agent);
     }
 }

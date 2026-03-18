@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This contains the Client class for the Universal flow
  *
@@ -14,13 +16,14 @@
  * @link     https://duo.com/docs/duoweb-v4
  * @file
  */
+
 namespace Duo\DuoUniversal;
 
-use \Firebase\JWT\JWT;
-use \Firebase\JWT\Key;
-use \Firebase\JWT\BeforeValidException;
-use \Firebase\JWT\ExpiredException;
-use \Firebase\JWT\SignatureInvalidException;
+use Firebase\JWT\BeforeValidException;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Firebase\JWT\SignatureInvalidException;
 use UnexpectedValueException;
 
 /**
@@ -28,35 +31,35 @@ use UnexpectedValueException;
  */
 class Client
 {
-    const MAX_STATE_LENGTH = 1024;
-    const MIN_STATE_LENGTH = 22;
-    const JTI_LENGTH = 36;
-    const DEFAULT_STATE_LENGTH = 36;
-    const CLIENT_ID_LENGTH = 20;
-    const CLIENT_SECRET_LENGTH = 40;
-    const HS512_MIN_KEY_LENGTH = 64;
-    const JWT_EXPIRATION = 300;
-    const JWT_LEEWAY = 60;
-    const SUCCESS_STATUS_CODE = 200;
+    public const MAX_STATE_LENGTH = 1024;
+    public const MIN_STATE_LENGTH = 22;
+    public const JTI_LENGTH = 36;
+    public const DEFAULT_STATE_LENGTH = 36;
+    public const CLIENT_ID_LENGTH = 20;
+    public const CLIENT_SECRET_LENGTH = 40;
+    public const HS512_MIN_KEY_LENGTH = 64;
+    public const JWT_EXPIRATION = 300;
+    public const JWT_LEEWAY = 60;
+    public const SUCCESS_STATUS_CODE = 200;
 
-    const USER_AGENT = "duo_universal_php/1.1.2";
-    const SIG_ALGORITHM = "HS512";
-    const GRANT_TYPE = "authorization_code";
-    const CLIENT_ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    public const USER_AGENT = 'duo_universal_php/1.1.2';
+    public const SIG_ALGORITHM = 'HS512';
+    public const GRANT_TYPE = 'authorization_code';
+    public const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
 
-    const HEALTH_CHECK_ENDPOINT = "/oauth/v1/health_check";
-    const TOKEN_ENDPOINT = "/oauth/v1/token";
-    const AUTHORIZE_ENDPOINT = "/oauth/v1/authorize";
+    public const HEALTH_CHECK_ENDPOINT = '/oauth/v1/health_check';
+    public const TOKEN_ENDPOINT = '/oauth/v1/token';
+    public const AUTHORIZE_ENDPOINT = '/oauth/v1/authorize';
 
-    const USERNAME_ERROR = "The username is invalid.";
-    const NONCE_ERROR = "The nonce is invalid.";
-    const JWT_DECODE_ERROR = "Error decoding JWT";
-    const INVALID_CLIENT_ID_ERROR = "The Client ID is invalid";
-    const INVALID_CLIENT_SECRET_ERROR = "The Client Secret is invalid";
-    const DUO_STATE_ERROR = "State must be at least " . self::MIN_STATE_LENGTH . " characters long and no longer than " . self::MAX_STATE_LENGTH . " characters";
-    const FAILED_CONNECTION = "Unable to connect to Duo";
-    const MALFORMED_RESPONSE = "Result missing expected data.";
-    const DUO_CERTS = __DIR__ . "/ca_certs.pem";
+    public const USERNAME_ERROR = 'The username is invalid.';
+    public const NONCE_ERROR = 'The nonce is invalid.';
+    public const JWT_DECODE_ERROR = 'Error decoding JWT';
+    public const INVALID_CLIENT_ID_ERROR = 'The Client ID is invalid';
+    public const INVALID_CLIENT_SECRET_ERROR = 'The Client Secret is invalid';
+    public const DUO_STATE_ERROR = 'State must be at least ' . self::MIN_STATE_LENGTH . ' characters long and no longer than ' . self::MAX_STATE_LENGTH . ' characters';
+    public const FAILED_CONNECTION = 'Unable to connect to Duo';
+    public const MALFORMED_RESPONSE = 'Result missing expected data.';
+    public const DUO_CERTS = __DIR__ . '/ca_certs.pem';
 
     /**
      * @var string
@@ -90,11 +93,11 @@ class Client
      */
     private function getExceptionFromResult(array $result): string
     {
-        if (isset($result["message"]) && isset($result["message_detail"])) {
-            return $result["message"] . ": " . $result["message_detail"];
+        if (isset($result['message']) && isset($result['message_detail'])) {
+            return $result['message'] . ': ' . $result['message_detail'];
         }
-        if (isset($result["error"]) && isset($result["error_description"])) {
-            return $result["error"] . ": " . $result["error_description"];
+        if (isset($result['error']) && isset($result['error_description'])) {
+            return $result['error'] . ': ' . $result['error_description'];
         }
         return self::MALFORMED_RESPONSE;
     }
@@ -112,7 +115,7 @@ class Client
     protected function makeHttpsCall(string $endpoint, array $request, ?string $user_agent = null): array
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://" . $this->api_host . $endpoint);
+        curl_setopt($ch, CURLOPT_URL, 'https://' . $this->api_host . $endpoint);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
         curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
@@ -154,12 +157,12 @@ class Client
     {
         $date = new \DateTime();
         $current_date = $date->getTimestamp();
-        $payload =  [ "iss" => $this->client_id,
-                      "sub" => $this->client_id,
-                      "aud" => $audience,
-                      "jti" => $this->generateRandomString(self::JTI_LENGTH),
-                      "iat" => $current_date,
-                      "exp" => $current_date + self::JWT_EXPIRATION
+        $payload =  [ 'iss' => $this->client_id,
+                      'sub' => $this->client_id,
+                      'aud' => $audience,
+                      'jti' => $this->generateRandomString(self::JTI_LENGTH),
+                      'iat' => $current_date,
+                      'exp' => $current_date + self::JWT_EXPIRATION,
         ];
         return JWT::encode($payload, $this->getPaddedSecret(), self::SIG_ALGORITHM);
     }
@@ -180,7 +183,7 @@ class Client
         }
 
         $ALPHANUMERICS = array_merge(range('A', 'Z'), range('a', 'z'), range(0, 9));
-        $state = "";
+        $state = '';
 
         for ($i = 0; $i < $state_length; ++$i) {
             $state = $state . $ALPHANUMERICS[random_int(0, count($ALPHANUMERICS) - 1)];
@@ -240,10 +243,10 @@ class Client
      */
     private function buildUserAgent(): string
     {
-        $base_user_agent = self::USER_AGENT . " php/" . phpversion() . " "
+        $base_user_agent = self::USER_AGENT . ' php/' . phpversion() . ' '
                          . php_uname();
         if (!empty($this->user_agent_extension)) {
-            return $base_user_agent . " " . $this->user_agent_extension;
+            return $base_user_agent . ' ' . $this->user_agent_extension;
         }
         return $base_user_agent;
     }
@@ -264,13 +267,13 @@ class Client
      */
     public function healthCheck(): array
     {
-        $audience = "https://" . $this->api_host . self::HEALTH_CHECK_ENDPOINT;
+        $audience = 'https://' . $this->api_host . self::HEALTH_CHECK_ENDPOINT;
         $jwt = $this->createJwtPayload($audience);
-        $request = ["client_id" => $this->client_id, "client_assertion" => $jwt];
+        $request = ['client_id' => $this->client_id, 'client_assertion' => $jwt];
 
         $result = $this->makeHttpsCall(self::HEALTH_CHECK_ENDPOINT, $request);
 
-        if (!isset($result["stat"]) || $result["stat"] !== "OK") {
+        if (!isset($result['stat']) || $result['stat'] !== 'OK') {
             throw new DuoException($this->getExceptionFromResult($result));
         }
         return $result;
@@ -300,12 +303,12 @@ class Client
             'redirect_uri' => $this->redirect_url,
             'client_id' => $this->client_id,
             'iss' => $this->client_id,
-            'aud' => "https://" . $this->api_host,
+            'aud' => 'https://' . $this->api_host,
             'exp' => $current_date + self::JWT_EXPIRATION,
             'state' => $state,
             'response_type' => 'code',
             'duo_uname' => $username,
-            'use_duo_code_attribute' => $this->use_duo_code_attribute
+            'use_duo_code_attribute' => $this->use_duo_code_attribute,
         ];
 
         $jwt = JWT::encode($payload, $this->getPaddedSecret(), self::SIG_ALGORITHM);
@@ -314,11 +317,11 @@ class Client
             'client_id' => $this->client_id,
             'scope' => 'openid',
             'redirect_uri' => $this->redirect_url,
-            'request' => $jwt
+            'request' => $jwt,
         ];
 
         $arguments = http_build_query($allArgs);
-        return "https://" . $this->api_host . self::AUTHORIZE_ENDPOINT . "?" . $arguments;
+        return 'https://' . $this->api_host . self::AUTHORIZE_ENDPOINT . '?' . $arguments;
     }
 
     /**
@@ -335,25 +338,25 @@ class Client
      */
     public function exchangeAuthorizationCodeFor2FAResult(string $duoCode, string $username, ?string $nonce = null): array
     {
-        $token_endpoint = "https://" . $this->api_host . self::TOKEN_ENDPOINT;
+        $token_endpoint = 'https://' . $this->api_host . self::TOKEN_ENDPOINT;
         $useragent = $this->buildUserAgent();
         $jwt = $this->createJwtPayload($token_endpoint);
-        $request = ["grant_type" => self::GRANT_TYPE,
-                    "code" => $duoCode,
-                    "redirect_uri" => $this->redirect_url,
-                    "client_id" => $this->client_id,
-                    "client_assertion_type" => self::CLIENT_ASSERTION_TYPE,
-                    "client_assertion" => $jwt];
+        $request = ['grant_type' => self::GRANT_TYPE,
+                    'code' => $duoCode,
+                    'redirect_uri' => $this->redirect_url,
+                    'client_id' => $this->client_id,
+                    'client_assertion_type' => self::CLIENT_ASSERTION_TYPE,
+                    'client_assertion' => $jwt];
         $result = $this->makeHttpsCall(self::TOKEN_ENDPOINT, $request, $useragent);
 
         /* Verify that we are receiving the expected response from Duo */
-        $required_keys = ["id_token", "access_token", "expires_in", "token_type"];
+        $required_keys = ['id_token', 'access_token', 'expires_in', 'token_type'];
         foreach ($required_keys as $key) {
             if (!isset($result[$key])) {
                 throw new DuoException(self::MALFORMED_RESPONSE);
             }
         }
-        if ($result["token_type"] !== "Bearer") {
+        if ($result['token_type'] !== 'Bearer') {
             throw new DuoException(self::MALFORMED_RESPONSE);
         }
 
@@ -367,7 +370,7 @@ class Client
             throw new DuoException(self::JWT_DECODE_ERROR);
         }
 
-        $required_token_key = ["exp", "iat", "iss", "aud"];
+        $required_token_key = ['exp', 'iat', 'iss', 'aud'];
         foreach ($required_token_key as $key) {
             if (!isset($token[$key])) {
                 throw new DuoException(self::MALFORMED_RESPONSE);
