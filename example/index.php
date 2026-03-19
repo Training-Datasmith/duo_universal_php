@@ -106,7 +106,7 @@ $app->get('/duo-callback', function (Request $request, Response $response, $args
     if (isset($query_params['error'])) {
         $error_msg = $query_params['error'] . ':' . $query_params['error_description'];
         $logger->error($error_msg);
-        $response->getBody()->write('Got Error: ' . $error_msg);
+        $response->getBody()->write('Got Error: ' . htmlspecialchars($error_msg, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         return $response;
     }
 
