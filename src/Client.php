@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * This contains the Client class for the Universal flow
  *
@@ -16,16 +16,14 @@ declare(strict_types=1);
  * @link     https://duo.com/docs/duoweb-v4
  * @file
  */
+namespace Duo\Duo_Universal;
 
-namespace Duo\DuoUniversal;
-
-use Firebase\JWT\BeforeValidException;
-use Firebase\JWT\ExpiredException;
+use Firebase\JWT\Before_Valid_Exception;
+use Firebase\JWT\Expired_Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use Firebase\JWT\SignatureInvalidException;
+use Firebase\JWT\Signature_Invalid_Exception;
 use UnexpectedValueException;
-
 /**
  * This class contains the client for the Universal flow.
  */
@@ -41,16 +39,13 @@ class Client
     public const JWT_EXPIRATION = 300;
     public const JWT_LEEWAY = 60;
     public const SUCCESS_STATUS_CODE = 200;
-
     public const USER_AGENT = 'duo_universal_php/1.1.2';
     public const SIG_ALGORITHM = 'HS512';
     public const GRANT_TYPE = 'authorization_code';
     public const CLIENT_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
-
     public const HEALTH_CHECK_ENDPOINT = '/oauth/v1/health_check';
     public const TOKEN_ENDPOINT = '/oauth/v1/token';
     public const AUTHORIZE_ENDPOINT = '/oauth/v1/authorize';
-
     public const USERNAME_ERROR = 'The username is invalid.';
     public const NONCE_ERROR = 'The nonce is invalid.';
     public const JWT_DECODE_ERROR = 'Error decoding JWT';
@@ -60,7 +55,6 @@ class Client
     public const FAILED_CONNECTION = 'Unable to connect to Duo';
     public const MALFORMED_RESPONSE = 'Result missing expected data.';
     public const DUO_CERTS = __DIR__ . '/ca_certs.pem';
-
     /**
      * @var string
      */
@@ -83,7 +77,6 @@ class Client
     public $use_duo_code_attribute;
     private string $client_secret;
     private $user_agent_extension;
-
     /**
      * Retrieves exception message for DuoException from HTTPS result message.
      *
@@ -91,7 +84,7 @@ class Client
      *
      * @return string The exception message taken from the message or MALFORMED_RESPONSE
      */
-    private function getExceptionFromResult(array $result): string
+    private function get_exception_from_result(array $result): string
     {
         if (isset($result['message']) && isset($result['message_detail'])) {
             return $result['message'] . ': ' . $result['message_detail'];
@@ -101,7 +94,6 @@ class Client
         }
         return self::MALFORMED_RESPONSE;
     }
-
     /**
      * Make HTTPS calls to Duo.
      *
@@ -112,7 +104,7 @@ class Client
      * @return array of strings
      * @throws DuoException For failure to connect to Duo
      */
-    protected function makeHttpsCall(string $endpoint, array $request, ?string $user_agent = null): array
+    protected function make_https_call(string $endpoint, array $request, ?string $user_agent = null): array
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, 'https://' . $this->api_host . $endpoint);
@@ -128,19 +120,17 @@ class Client
         if (!is_null($this->http_proxy)) {
             curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
             curl_setopt($ch, CURLOPT_PROXY, $this->http_proxy);
-        };
+        }
         $result = curl_exec($ch);
-
         /* Throw an error if the result doesn't exist or if our request returned a 5XX status */
         if (!$result) {
-            throw new DuoException(self::FAILED_CONNECTION);
+            throw new Duo_Exception(self::FAILED_CONNECTION);
         }
         if (self::SUCCESS_STATUS_CODE !== curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
-            throw new DuoException($this->getExceptionFromResult(json_decode($result, true)));
+            throw new Duo_Exception($this->get_exception_from_result(json_decode($result, true)));
         }
         return json_decode($result, true);
     }
-
     /**
      * Pads the client secret to meet minimum key length requirements for HS512.
      * HMAC-SHA512 in php-jwt v7+ requires 64-byte keys. Padding with null bytes
@@ -148,25 +138,17 @@ class Client
      *
      * @return string The padded client secret
      */
-    private function getPaddedSecret(): string
+    private function get_padded_secret(): string
     {
-        return str_pad($this->client_secret, self::HS512_MIN_KEY_LENGTH, "\0");
+        return str_pad($this->client_secret, self::HS512_MIN_KEY_LENGTH, "\x00");
     }
-
-    private function createJwtPayload(string $audience): string
+    private function create_jwt_payload(string $audience): string
     {
         $date = new \DateTime();
-        $current_date = $date->getTimestamp();
-        $payload =  [ 'iss' => $this->client_id,
-                      'sub' => $this->client_id,
-                      'aud' => $audience,
-                      'jti' => $this->generateRandomString(self::JTI_LENGTH),
-                      'iat' => $current_date,
-                      'exp' => $current_date + self::JWT_EXPIRATION,
-        ];
-        return JWT::encode($payload, $this->getPaddedSecret(), self::SIG_ALGORITHM);
+        $current_date = $date->get_timestamp();
+        $payload = ['iss' => $this->client_id, 'sub' => $this->client_id, 'aud' => $audience, 'jti' => $this->generate_random_string(self::JTI_LENGTH), 'iat' => $current_date, 'exp' => $current_date + self::JWT_EXPIRATION];
+        return JWT::encode($payload, $this->get_padded_secret(), self::SIG_ALGORITHM);
     }
-
     /**
      * Generates a random hex string.
      *
@@ -175,22 +157,18 @@ class Client
      * @return string A hexadecimal string
      * @throws DuoException    For lengths that are shorter than MIN_STATE_LENGTH or longer than MAX_STATE_LENGTH
      */
-    private function generateRandomString(int $state_length): string
+    private function generate_random_string(int $state_length): string
     {
-        if ($state_length > self::MAX_STATE_LENGTH || $state_length < self::MIN_STATE_LENGTH
-        ) {
-            throw new DuoException(self::DUO_STATE_ERROR);
+        if ($state_length > self::MAX_STATE_LENGTH || $state_length < self::MIN_STATE_LENGTH) {
+            throw new Duo_Exception(self::DUO_STATE_ERROR);
         }
-
         $ALPHANUMERICS = array_merge(range('A', 'Z'), range('a', 'z'), range(0, 9));
         $state = '';
-
         for ($i = 0; $i < $state_length; ++$i) {
             $state = $state . $ALPHANUMERICS[random_int(0, count($ALPHANUMERICS) - 1)];
         }
         return $state;
     }
-
     /**
      * Constructor for Client class.
      *
@@ -203,19 +181,13 @@ class Client
      *
      * @throws DuoException For invalid Client ID or Client Secret
      */
-    public function __construct(
-        string $client_id,
-        string $client_secret,
-        string $api_host,
-        string $redirect_url,
-        bool $use_duo_code_attribute = true,
-        ?string $http_proxy = null
-    ) {
+    public function __construct(string $client_id, string $client_secret, string $api_host, string $redirect_url, bool $use_duo_code_attribute = true, ?string $http_proxy = null)
+    {
         if (strlen($client_id) !== self::CLIENT_ID_LENGTH) {
-            throw new DuoException(self::INVALID_CLIENT_ID_ERROR);
+            throw new Duo_Exception(self::INVALID_CLIENT_ID_ERROR);
         }
         if (strlen($client_secret) !== self::CLIENT_SECRET_LENGTH) {
-            throw new DuoException(self::INVALID_CLIENT_SECRET_ERROR);
+            throw new Duo_Exception(self::INVALID_CLIENT_SECRET_ERROR);
         }
         $this->client_id = $client_id;
         $this->client_secret = $client_secret;
@@ -225,60 +197,52 @@ class Client
         $this->http_proxy = $http_proxy;
         $this->user_agent_extension = null;
     }
-
     /**
      * Append custom information to the user agent string.
      *
      * @param string $user_agent_extension Custom user agent information
      */
-    public function appendToUserAgent(string $user_agent_extension): void
+    public function append_to_user_agent(string $user_agent_extension): void
     {
         $this->user_agent_extension = trim($user_agent_extension);
     }
-
     /**
      * Build the complete user agent string.
      *
      * @return string The complete user agent string
      */
-    private function buildUserAgent(): string
+    private function build_user_agent(): string
     {
-        $base_user_agent = self::USER_AGENT . ' php/' . phpversion() . ' '
-                         . php_uname();
+        $base_user_agent = self::USER_AGENT . ' php/' . phpversion() . ' ' . php_uname();
         if (!empty($this->user_agent_extension)) {
             return $base_user_agent . ' ' . $this->user_agent_extension;
         }
         return $base_user_agent;
     }
-
     /**
      * Generate a random hex string with a length of DEFAULT_STATE_LENGTH.
      */
-    public function generateState(): string
+    public function generate_state(): string
     {
-        return $this->generateRandomString(self::DEFAULT_STATE_LENGTH);
+        return $this->generate_random_string(self::DEFAULT_STATE_LENGTH);
     }
-
     /**
      * Makes a call to HEALTH_CHECK_ENDPOINT to see if Duo is available.
      *
      * @return array The result of the health check
      * @throws DuoException For failure to connect to Duo or failed health check
      */
-    public function healthCheck(): array
+    public function health_check(): array
     {
         $audience = 'https://' . $this->api_host . self::HEALTH_CHECK_ENDPOINT;
-        $jwt = $this->createJwtPayload($audience);
+        $jwt = $this->create_jwt_payload($audience);
         $request = ['client_id' => $this->client_id, 'client_assertion' => $jwt];
-
-        $result = $this->makeHttpsCall(self::HEALTH_CHECK_ENDPOINT, $request);
-
+        $result = $this->make_https_call(self::HEALTH_CHECK_ENDPOINT, $request);
         if (!isset($result['stat']) || $result['stat'] !== 'OK') {
-            throw new DuoException($this->getExceptionFromResult($result));
+            throw new Duo_Exception($this->get_exception_from_result($result));
         }
         return $result;
     }
-
     /**
      * Generate URI to redirect to for the Duo prompt.
      *
@@ -289,41 +253,19 @@ class Client
      * @return string The URI used to redirect to the Duo prompt
      * @throws DuoException For invalid inputs
      */
-    public function createAuthUrl(string $username, string $state): string
+    public function create_auth_url(string $username, string $state): string
     {
-        if (strlen($state) < self::MIN_STATE_LENGTH || strlen($state) > self::MAX_STATE_LENGTH
-        ) {
-            throw new DuoException(self::DUO_STATE_ERROR);
+        if (strlen($state) < self::MIN_STATE_LENGTH || strlen($state) > self::MAX_STATE_LENGTH) {
+            throw new Duo_Exception(self::DUO_STATE_ERROR);
         }
-
         $date = new \DateTime();
-        $current_date = $date->getTimestamp();
-        $payload = [
-            'scope' => 'openid',
-            'redirect_uri' => $this->redirect_url,
-            'client_id' => $this->client_id,
-            'iss' => $this->client_id,
-            'aud' => 'https://' . $this->api_host,
-            'exp' => $current_date + self::JWT_EXPIRATION,
-            'state' => $state,
-            'response_type' => 'code',
-            'duo_uname' => $username,
-            'use_duo_code_attribute' => $this->use_duo_code_attribute,
-        ];
-
-        $jwt = JWT::encode($payload, $this->getPaddedSecret(), self::SIG_ALGORITHM);
-        $allArgs = [
-            'response_type' => 'code',
-            'client_id' => $this->client_id,
-            'scope' => 'openid',
-            'redirect_uri' => $this->redirect_url,
-            'request' => $jwt,
-        ];
-
-        $arguments = http_build_query($allArgs);
+        $current_date = $date->get_timestamp();
+        $payload = ['scope' => 'openid', 'redirect_uri' => $this->redirect_url, 'client_id' => $this->client_id, 'iss' => $this->client_id, 'aud' => 'https://' . $this->api_host, 'exp' => $current_date + self::JWT_EXPIRATION, 'state' => $state, 'response_type' => 'code', 'duo_uname' => $username, 'use_duo_code_attribute' => $this->use_duo_code_attribute];
+        $jwt = JWT::encode($payload, $this->get_padded_secret(), self::SIG_ALGORITHM);
+        $all_args = ['response_type' => 'code', 'client_id' => $this->client_id, 'scope' => 'openid', 'redirect_uri' => $this->redirect_url, 'request' => $jwt];
+        $arguments = http_build_query($all_args);
         return 'https://' . $this->api_host . self::AUTHORIZE_ENDPOINT . '?' . $arguments;
     }
-
     /**
      * Exchange a code returned by Duo for a token that contains information about the authorization.
      *
@@ -336,56 +278,47 @@ class Client
      * @throws DuoException For malformed response from Duo, problems decoding the JWT,
      *                      the wrong username, and the wrong nonce
      */
-    public function exchangeAuthorizationCodeFor2FAResult(string $duoCode, string $username, ?string $nonce = null): array
+    public function exchange_authorization_code_for2fa_result(string $duo_code, string $username, ?string $nonce = null): array
     {
         $token_endpoint = 'https://' . $this->api_host . self::TOKEN_ENDPOINT;
-        $useragent = $this->buildUserAgent();
-        $jwt = $this->createJwtPayload($token_endpoint);
-        $request = ['grant_type' => self::GRANT_TYPE,
-                    'code' => $duoCode,
-                    'redirect_uri' => $this->redirect_url,
-                    'client_id' => $this->client_id,
-                    'client_assertion_type' => self::CLIENT_ASSERTION_TYPE,
-                    'client_assertion' => $jwt];
-        $result = $this->makeHttpsCall(self::TOKEN_ENDPOINT, $request, $useragent);
-
+        $useragent = $this->build_user_agent();
+        $jwt = $this->create_jwt_payload($token_endpoint);
+        $request = ['grant_type' => self::GRANT_TYPE, 'code' => $duo_code, 'redirect_uri' => $this->redirect_url, 'client_id' => $this->client_id, 'client_assertion_type' => self::CLIENT_ASSERTION_TYPE, 'client_assertion' => $jwt];
+        $result = $this->make_https_call(self::TOKEN_ENDPOINT, $request, $useragent);
         /* Verify that we are receiving the expected response from Duo */
         $required_keys = ['id_token', 'access_token', 'expires_in', 'token_type'];
         foreach ($required_keys as $key) {
             if (!isset($result[$key])) {
-                throw new DuoException(self::MALFORMED_RESPONSE);
+                throw new Duo_Exception(self::MALFORMED_RESPONSE);
             }
         }
         if ($result['token_type'] !== 'Bearer') {
-            throw new DuoException(self::MALFORMED_RESPONSE);
+            throw new Duo_Exception(self::MALFORMED_RESPONSE);
         }
-
         try {
             JWT::$leeway = self::JWT_LEEWAY;
-            $jwt_key = new Key($this->getPaddedSecret(), self::SIG_ALGORITHM);
+            $jwt_key = new Key($this->get_padded_secret(), self::SIG_ALGORITHM);
             $token_obj = JWT::decode($result['id_token'], @$jwt_key);
             /* JWT::decode returns a PHP object, this will turn the object into a multidimensional array */
             $token = json_decode(json_encode($token_obj), true);
-        } catch (SignatureInvalidException | BeforeValidException | ExpiredException | UnexpectedValueException $e) {
-            throw new DuoException(self::JWT_DECODE_ERROR);
+        } catch (Signature_Invalid_Exception|Before_Valid_Exception|Expired_Exception|UnexpectedValueException $e) {
+            throw new Duo_Exception(self::JWT_DECODE_ERROR);
         }
-
         $required_token_key = ['exp', 'iat', 'iss', 'aud'];
         foreach ($required_token_key as $key) {
             if (!isset($token[$key])) {
-                throw new DuoException(self::MALFORMED_RESPONSE);
+                throw new Duo_Exception(self::MALFORMED_RESPONSE);
             }
         }
         /* Verify we have all expected fields in our token */
         if ($token['iss'] !== $token_endpoint || $token['aud'] !== $this->client_id) {
-            throw new DuoException(self::MALFORMED_RESPONSE);
+            throw new Duo_Exception(self::MALFORMED_RESPONSE);
         }
-
         if (!isset($token['preferred_username']) || $token['preferred_username'] !== $username) {
-            throw new DuoException(self::USERNAME_ERROR);
+            throw new Duo_Exception(self::USERNAME_ERROR);
         }
         if (is_string($nonce) && (!isset($token['nonce']) || $token['nonce'] !== $nonce)) {
-            throw new DuoException(self::NONCE_ERROR);
+            throw new Duo_Exception(self::NONCE_ERROR);
         }
         return $token;
     }

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * This contians the DuoException class used by
  * Client
@@ -14,8 +14,7 @@ declare(strict_types=1);
  * @link     TODO
  * @file
  */
-
-namespace Duo\DuoUniversal;
+namespace Duo\Duo_Universal;
 
 /**
  * This class contains a Duo specific exception
@@ -26,6 +25,6 @@ namespace Duo\DuoUniversal;
  * @license  https://license_url TODO
  * @link     TODO
  */
-class DuoException extends \Exception
+class Duo_Exception extends \Exception
 {
 }
