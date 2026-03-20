@@ -8,7 +8,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Duo\\DuoUniversal\\": "src/"
+            "Duo\\Duo_Universal\\": "src/"
         }
     },
     "autoload-dev": {
